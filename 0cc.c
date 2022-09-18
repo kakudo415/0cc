@@ -1,27 +1,29 @@
 #include <ctype.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-// トークンの型を表す値
-enum {
-  TK_NUM = 256,
-  TK_EOF,
-};
+// トークンの種類
+typedef enum {
+  TK_RESERVED, // 記号
+  TK_NUM,      // 整数
+  TK_EOF,      // EOF
+} TokenKind;
+
+typedef struct Token Token;
 
 // トークン型
-typedef struct {
-  int ty;
-  int val;
-  char *input;
-} Token;
+struct Token {
+  TokenKind kind; // 型
+  Token *next;    // 次
+  int val;        // kindがTK_NUMのとき、その値
+  char *str;      // トークン文字列
+};
 
-// 入力プログラム
-char *user_input;
-
-// トークナイズした結果のトークン列 < 100
-Token tokens[100];
+// 現在注目しているトークン
+Token *token;
 
 // エラーを報告する関数
 void error(char *fmt, ...) {
@@ -32,20 +34,52 @@ void error(char *fmt, ...) {
   exit(1);
 }
 
-// エラー箇所を報告する関数
-void error_at(char *loc, char *msg) {
-  int pos = loc - user_input;
-  fprintf(stderr, "%s\n", user_input);
-  fprintf(stderr, "%*s", pos, "");  // pos個の空白を出力
-  fprintf(stderr, "^ %s\n", msg);
-  exit(1);
+// 次のトークンが期待している記号のときには、トークンを1つ読み進めて真を返す。
+bool consume(char op) {
+  if (token->kind != TK_RESERVED || token->str[0] != op) {
+    return false;
+  }
+  token = token->next;
+  return true;
 }
 
-// user_inputをトークンに分割してtokensに保存する
-void tokenize() {
-  char *p = user_input;
+// 次のトークンが期待している記号の場合、トークンを1つ読み進める
+void expect(char op) {
+  if (token->kind != TK_RESERVED || token->str[0] != op) {
+    error("'%c'ではありません", op);
+  }
+  token = token->next;
+}
 
-  int i = 0;
+// 次のトークンが数値の場合、トークンを1つ読み進めてその値を返す
+int expect_number() {
+  if (token->kind != TK_NUM) {
+    error("数ではありません");
+  }
+  int val = token->val;
+  token = token->next;
+  return val;
+}  
+
+bool at_eof() {
+  return token->kind == TK_EOF;
+}
+
+// 新しいトークンを作成してcurに繋げる
+Token *new_token(TokenKind kind, Token *cur, char *str) {
+  Token *tok = calloc(1, sizeof(Token));
+  tok->kind = kind;
+  tok->str = str;
+  cur->next = tok;
+  return tok;
+}
+
+// 入力文字列pをトークナイズしてそれを返す
+Token *tokenize(char *p) {
+  Token head;
+  head.next = NULL;
+  Token *cur = &head;
+
   while (*p) {
     if (isspace(*p)) {
       p++;
@@ -53,37 +87,31 @@ void tokenize() {
     }
 
     if (*p == '+' || *p == '-') {
-      tokens[i].ty = *p;
-      tokens[i].input = p;
-      i++;
-      p++;
+      cur = new_token(TK_RESERVED, cur, p++);
       continue;
     }
 
     if (isdigit(*p)) {
-      tokens[i].ty = TK_NUM;
-      tokens[i].input = p;
-      tokens[i].val = strtol(p, &p, 10);
-      i++;
+      cur = new_token(TK_NUM, cur, p);
+      cur->val = strtol(p, &p, 10);
       continue;
     }
-
-    error_at(p, "トークナイズできません");
+    
+    error("トークナイズできません");
   }
 
-  tokens[i].ty = TK_EOF;
-  tokens[i].input = p;
+  new_token(TK_EOF, cur, p);
+  return head.next;
 }
 
 int main(int argc, char **argv) {
   if (argc != 2) {
-    fprintf(stderr, "引数の数エラー");
+    error("引数の個数が正しくありません");
     return 1;
   }
 
   // トークナイズする
-  user_input = argv[1];
-  tokenize();
+  token = tokenize(argv[1]);
 
   // アセンブリの前半部分を出力
   printf(".intel_syntax noprefix\n");
@@ -91,37 +119,20 @@ int main(int argc, char **argv) {
   printf("main:\n");
 
   // 必要な式の最初の数を確かめて最初のmov命令
-  if (tokens[0].ty != TK_NUM) {
-    error_at(tokens[0].input, "数ではありません");
-  }
-  printf("  mov rax, %d\n", tokens[0].val);
+  printf("  mov rax, %d\n", expect_number());
 
   // "+ 数" もしくは "- 数" というトークンの並びを消費しつつアセンブリを出力
-  int i = 1;
-  while (tokens[i].ty != TK_EOF) {
-    if (tokens[i].ty == '+') {
-      i++;
-      if (tokens[i].ty != TK_NUM) {
-        error_at(tokens[i].input, "数ではありません");
-      }
-      printf("  add rax, %d\n", tokens[i].val);
-      i++;
+  while (!at_eof()) {
+    if (consume('+')) {
+      printf("  add rax, %d\n", expect_number());
       continue;
     }
 
-    if (tokens[i].ty == '-') {
-      i++;
-      if (tokens[i].ty != TK_NUM) {
-        error_at(tokens[i].input, "数ではありません");
-      }
-      printf("  sub rax, %d\n", tokens[i].val);
-      i++;
-      continue;
-    }
-
-    error_at(tokens[i].input, "予期しないトークンです");
+    expect('-');
+    printf("  sub rax, %d\n", expect_number());
   }
 
   printf("  ret\n");
   return 0;
 }
+
