@@ -28,3 +28,12 @@ docker run --rm -v {ホストのディレクトリ}:{コンテナ内のディレ
 
 - `-v`: ホストのディレクトリをコンテナにマウントする
 - `-w`: コマンドを実行するディレクトリを指定する
+
+## （現時点の）文法
+
+```ebnf
+expr    = mul ("+" mul | "-" mul)*
+mul     = unary ("*" unary | "/" unary)*
+unary   = ("+" | "-")? primary
+primary = num | "(" expr ")"
+```
