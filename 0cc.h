@@ -6,6 +6,7 @@
 #include <string.h>
 
 void error(char*, ...);
+void error_at(char*, char*, ...);
 
 typedef enum {
   TK_RESERVED, // 記号
