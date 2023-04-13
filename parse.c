@@ -3,6 +3,8 @@
 // 入力プログラム
 char *user_input;
 
+Node *code[100];
+
 // 現在注目しているトークン
 Token *token;
 
@@ -38,10 +40,20 @@ bool consume(char *op) {
   return true;
 }
 
+// 次のトークンが識別子の場合は、トークンを1つ読み進めて識別子トークンを返す
+Token *consume_ident() {
+  if (token->kind != TK_IDENT) {
+    return NULL;
+  }
+  Token *ident_token = token;
+  token = token->next;
+  return ident_token;
+}
+
 // 次のトークンが期待している記号の場合、トークンを1つ読み進める
 void expect(char *op) {
   if (token->kind != TK_RESERVED || strlen(op) != token->len || memcmp(token->str, op, token->len)) {
-    error_at(token->str, "'%c'ではありません", op);
+    error_at(token->str, "'%s'ではありません", op);
   }
   token = token->next;
 }
@@ -94,8 +106,14 @@ Token *tokenize(char *p) {
       continue;
     }
 
-    if (*p == '+' || *p == '-' || *p == '*' || *p == '/' || *p == '(' || *p == ')' || *p == '<' || *p == '>') {
+    if (*p == '+' || *p == '-' || *p == '*' || *p == '/' || *p == '(' || *p == ')' || *p == '<' || *p == '>' || *p == '=' || *p == ';') {
       cur = new_token(TK_RESERVED, cur, p++, 1); // pの指す演算子をトークン化したあと、pをインクリメント
+      continue;
+    }
+
+    // ラテン文字1文字の変数
+    if ('a' <= *p && *p <= 'z') {
+      cur = new_token(TK_IDENT, cur, p++, 1);
       continue;
     }
 
@@ -129,7 +147,10 @@ Node *new_node_num(int val) {
   return node;
 }
 
+void program();
+Node *stmt();
 Node *expr();
+Node *assign();
 Node *equality();
 Node *relational();
 Node *add();
@@ -137,9 +158,32 @@ Node *mul();
 Node *unary();
 Node *primary();
 
+// program = stmt*
+void program() {
+  int i = 0;
+  while (!at_eof())
+    code[i++] = stmt();
+  code[i] = NULL;
+}
+
+// stmt = expr ";"
+Node *stmt() {
+  Node *node = expr();
+  expect(";");
+  return node;
+}
+
 // expr = equality
 Node *expr() {
-  return equality();
+  return assign();
+}
+
+// assign = equality ("=" assign)?
+Node *assign() {
+  Node *node = equality();
+  if (consume("="))
+    node = new_node(ND_ASSIGN, node, assign());
+  return node;
 }
 
 // equality = relational ("==" relational | "!=" relational)*
@@ -211,7 +255,7 @@ Node *unary() {
   return primary();
 }
 
-// primary = num | "(" expr ")"
+// primary = num | ident | "(" expr ")"
 Node *primary() {
   // 次のトークンが"("なら、"(" expr ")"のはず
   if (consume("(")) {
@@ -220,11 +264,20 @@ Node *primary() {
     return node;
   }
 
+  Token *tok = consume_ident();
+  if (tok) {
+    Node *node = calloc(1, sizeof(Node));
+    node->kind = ND_LVAR;
+    node->offset = 8 * (tok->str[0] - 'a' + 1);
+    return node;
+  }
+
   // そうでなければ数値のはず
   return new_node_num(expect_number());
 }
 
-Node *parse(Token *head) {
+Node **parse(Token *head) {
   token = head;
-  return expr();
+  program();
+  return code;
 }
