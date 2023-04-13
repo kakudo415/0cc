@@ -40,6 +40,15 @@ bool consume(char *op) {
   return true;
 }
 
+// 次のトークンが期待しているトークン型のときには、1つ読み進めて真を返す。
+bool consume_keyword(TokenKind kind) {
+  if (token->kind != kind) {
+    return false;
+  }
+  token = token->next;
+  return true;
+}
+
 // 次のトークンが識別子の場合は、トークンを1つ読み進めて識別子トークンを返す
 Token *consume_ident() {
   if (token->kind != TK_IDENT) {
@@ -127,7 +136,15 @@ void program() {
 
 // stmt = expr ";"
 Node *stmt() {
-  Node *node = expr();
+  Node *node;
+
+  if (consume_keyword(TK_RETURN)) {
+    node = calloc(1, sizeof(Node));
+    node->kind = ND_RETURN;
+    node->lhs = expr();
+  } else {
+    node = expr();
+  }
   expect(";");
   return node;
 }

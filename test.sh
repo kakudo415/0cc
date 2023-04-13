@@ -61,5 +61,9 @@ assert 10 'ho=10;'
 assert 29 'hoge = 44; fuga = 15; hoge - fuga;'
 assert 19 'po=2;mu=3*7;mu+(-po);'
 
+assert 17 'return 17;'
+assert 5 'return 2 + 3;'
+assert 100 'x = 20; y = 5; z = 3; return x * y; return y * z;'
+
 echo OK
 

@@ -10,6 +10,7 @@ void error_at(char*, char*, ...);
 
 typedef enum {
   TK_RESERVED, // 記号
+  TK_RETURN,   // return
   TK_IDENT,    // 識別子
   TK_NUM,      // 整数
   TK_EOF,      // EOF
@@ -37,7 +38,8 @@ typedef enum {
   ND_LT,  // <
   ND_LE,  // <=
   ND_ASSIGN, // =
-  ND_LVAR    // ローカル変数
+  ND_LVAR,   // ローカル変数
+  ND_RETURN, // return
 } NodeKind;
 
 typedef struct Node Node;

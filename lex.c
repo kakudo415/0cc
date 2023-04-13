@@ -57,6 +57,9 @@ Token *tokenize(char *p) {
       while (is_alnum(*p))
         p++;
       cur->len = p - q;
+
+      if (startswith(cur->str, "return"))
+        cur->kind = TK_RETURN;
       continue;
     }
 

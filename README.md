@@ -34,6 +34,7 @@ docker run --rm -v {ホストのディレクトリ}:{コンテナ内のディレ
 ```ebnf
 program    = stmt*
 stmt       = expr ";"
+           | "return" expr ";"
 expr       = assign
 assign     = equality ("=" assign)?
 equality   = relational ("==" relational | "!=" relational)*

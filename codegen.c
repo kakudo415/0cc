@@ -30,6 +30,14 @@ void gen(Node *node) {
       printf("  pop rax\n");  // 左辺値（変数のアドレス）
       printf("  mov [rax], rdi\n");
       printf("  push rdi\n"); // （代入も式で、右辺値をさらに返すことに注意）
+      return;
+    case ND_RETURN:
+      gen(node->lhs);
+      printf("  pop rax\n");
+      printf("  mov rsp, rbp\n");
+      printf("  pop rbp\n");
+      printf("  ret\n");
+      return;
   }
 
   gen(node->lhs);
