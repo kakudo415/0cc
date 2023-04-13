@@ -19,6 +19,13 @@ bool startswith(char *p, char *q) {
   return memcmp(p, q, strlen(q)) == 0; // strlen()はNULL文字の直前までの文字数
 }
 
+bool is_alnum(char c) {
+  return ('a' <= c && c <= 'z') ||
+         ('A' <= c && c <= 'Z') ||
+         ('0' <= c && c <= '9') ||
+         ('_' == c);
+}
+
 // 入力文字列pをトークナイズしてそれを返す
 Token *tokenize(char *p) {
   user_input = p;
@@ -45,7 +52,11 @@ Token *tokenize(char *p) {
 
     // ラテン文字1文字の変数
     if ('a' <= *p && *p <= 'z') {
-      cur = new_token(TK_IDENT, cur, p++, 1);
+      cur = new_token(TK_IDENT, cur, p, 0);
+      char *q = p;
+      while (is_alnum(*p))
+        p++;
+      cur->len = p - q;
       continue;
     }
 

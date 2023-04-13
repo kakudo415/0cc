@@ -57,5 +57,9 @@ assert 64 'n = 2; m = (n + n) * (n - 4) * (-8); m;'
 assert 1 'x = 5; y = 2; x > y;'
 assert 0 'm = 3; m * m == m;'
 
+assert 10 'ho=10;'
+assert 29 'hoge = 44; fuga = 15; hoge - fuga;'
+assert 19 'po=2;mu=3*7;mu+(-po);'
+
 echo OK
 

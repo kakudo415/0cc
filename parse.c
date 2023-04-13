@@ -72,6 +72,25 @@ bool at_eof() {
   return token->kind == TK_EOF;
 }
 
+// ローカル変数を管理する連結リスト
+typedef struct LVar LVar;
+struct LVar {
+  LVar *next;
+  char *name;
+  int len;
+  int offset;
+};
+LVar *locals;
+
+// ローカル変数を名前で検索する
+LVar *find_lvar(Token *tok) {
+  for (LVar *var = locals; var; var = var->next) {
+    if (var->len == tok->len && !memcmp(tok->str, var->name, var->len))
+      return var;
+  }
+  return NULL;
+}
+
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs) {
   Node *node = calloc(1, sizeof(Node));
   node->kind = kind;
@@ -208,7 +227,23 @@ Node *primary() {
   if (tok) {
     Node *node = calloc(1, sizeof(Node));
     node->kind = ND_LVAR;
-    node->offset = 8 * (tok->str[0] - 'a' + 1);
+
+    LVar *lvar = find_lvar(tok);
+    if (lvar) {
+      node->offset = lvar->offset;
+    } else {
+      lvar = calloc(1, sizeof(LVar));
+      lvar->next = locals; // 新しく使用された変数を変数リストの先頭に追加
+      lvar->name = tok->str;
+      lvar->len = tok->len;
+      if (locals == NULL) {
+        lvar->offset = 8;
+      } else {
+        lvar->offset = locals->offset + 8;
+      }
+      node->offset = lvar->offset;
+      locals = lvar;
+    }
     return node;
   }
 
