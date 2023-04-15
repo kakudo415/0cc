@@ -16,6 +16,7 @@ void gen(Node *node) {
   if (node == NULL) {
     return;
   }
+  int label;
   switch (node->kind) {
     case ND_NUM:
       printf("  push %d\n", node->val);
@@ -37,46 +38,46 @@ void gen(Node *node) {
       printf("  push rdi\n"); // （代入も式で、右辺値をさらに返すことに注意）
       return;
     case ND_IF:
-      label_unique++;
-      printf(".L_IF_%d:\n", label_unique);
+      label = label_unique++;
+      printf(".L_IF_%d:\n", label);
       gen(node->cond);
       printf("  pop rax\n");
       printf("  cmp rax, 0\n");
       if (node->els == NULL) {
-        printf("  je .L_FI_%d\n", label_unique);
+        printf("  je .L_FI_%d\n", label);
         gen(node->then);
       } else {
-        printf("  je .L_ELSE_%d\n", label_unique);
+        printf("  je .L_ELSE_%d\n", label);
         gen(node->then);
-        printf("  jmp .L_FI_%d\n", label_unique);
-        printf(".L_ELSE_%d:\n", label_unique);
+        printf("  jmp .L_FI_%d\n", label);
+        printf(".L_ELSE_%d:\n", label);
         gen(node->els);
       }
-      printf(".L_FI_%d:\n", label_unique);
+      printf(".L_FI_%d:\n", label);
       return;
     case ND_WHILE:
-      label_unique++;
-      printf(".L_WHILE_%d:\n", label_unique);
+      label = label_unique++;
+      printf(".L_WHILE_%d:\n", label);
       gen(node->cond);
       printf("  pop rax\n");
       printf("  cmp rax, 0\n");
-      printf("  je .L_ELIHW_%d\n", label_unique);
+      printf("  je .L_ELIHW_%d\n", label);
       gen(node->body);
-      printf("  jmp .L_WHILE_%d\n", label_unique);
-      printf(".L_ELIHW_%d:\n", label_unique);
+      printf("  jmp .L_WHILE_%d\n", label);
+      printf(".L_ELIHW_%d:\n", label);
       return;
     case ND_FOR:
-      label_unique++;
+      label = label_unique++;
       gen(node->init);
-      printf(".L_FOR_%d:\n", label_unique);
+      printf(".L_FOR_%d:\n", label);
       gen(node->cond);
       printf("  pop rax\n");
       printf("  cmp rax, 0\n");
-      printf("  je .L_ROF_%d\n", label_unique);
+      printf("  je .L_ROF_%d\n", label);
       gen(node->body);
       gen(node->inc);
-      printf("  jmp .L_FOR_%d\n", label_unique);
-      printf(".L_ROF_%d:\n", label_unique);
+      printf("  jmp .L_FOR_%d\n", label);
+      printf(".L_ROF_%d:\n", label);
       return;
     case ND_RETURN:
       gen(node->lhs);

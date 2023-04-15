@@ -76,5 +76,7 @@ assert 0 'acc = 0; while (0) acc = acc + 3; acc;'
 assert 12 'for (i = 0; i < 12; i = i + 1) i; i;'
 assert 7 'j = 0; for (; j < 7;) j = j + 1; j;'
 
+assert 21 'a = 0; for (i = 0; i < 7; i = i + 1) for (j = 0; j < 3; j = j + 1) a = a + 1; a;'
+
 echo OK
 
