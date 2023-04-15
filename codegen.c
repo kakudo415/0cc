@@ -1,5 +1,7 @@
 #include "0cc.h"
 
+int label_unique;
+
 // ベースポインタ(RBP)からのオフセットを利用して、ローカル変数のアドレスをスタックトップに置く
 void gen_lval(Node *node) {
   if (node->kind != ND_LVAR)
@@ -30,6 +32,24 @@ void gen(Node *node) {
       printf("  pop rax\n");  // 左辺値（変数のアドレス）
       printf("  mov [rax], rdi\n");
       printf("  push rdi\n"); // （代入も式で、右辺値をさらに返すことに注意）
+      return;
+    case ND_IF:
+      label_unique++;
+      printf(".L_IF_%d:\n", label_unique);
+      gen(node->cond);
+      printf("  pop rax\n");
+      printf("  cmp rax, 0\n");
+      if (node->els == NULL) {
+        printf("  je .L_END_%d\n", label_unique);
+        gen(node->then);
+      } else {
+        printf("  je .L_ELSE_%d\n", label_unique);
+        gen(node->then);
+        printf("  jmp .L_END_%d\n", label_unique);
+        printf(".L_ELSE_%d:\n", label_unique);
+        gen(node->els);
+      }
+      printf(".L_END_%d:\n", label_unique);
       return;
     case ND_RETURN:
       gen(node->lhs);

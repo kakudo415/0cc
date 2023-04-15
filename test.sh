@@ -65,5 +65,10 @@ assert 17 'return 17;'
 assert 5 'return 2 + 3;'
 assert 100 'x = 20; y = 5; z = 3; return x * y; return y * z;'
 
+assert 10 'if (1) 10;'
+assert 3 'if (0) 10; else 3;'
+assert 5 'if (2 > 1) 5; else 3;'
+assert 7 'if (3 > 8) 2; else 7;'
+
 echo OK
 

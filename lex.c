@@ -60,6 +60,13 @@ Token *tokenize(char *p) {
 
       if (startswith(cur->str, "return"))
         cur->kind = TK_RETURN;
+
+      if (startswith(cur->str, "if"))
+        cur->kind = TK_IF;
+
+      if (startswith(cur->str, "else"))
+        cur->kind = TK_ELSE;
+
       continue;
     }
 

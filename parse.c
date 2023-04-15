@@ -142,9 +142,24 @@ Node *stmt() {
     node = calloc(1, sizeof(Node));
     node->kind = ND_RETURN;
     node->lhs = expr();
-  } else {
-    node = expr();
+    expect(";");
+    return node;
   }
+
+  if (consume_keyword(TK_IF)) {
+    node = calloc(1, sizeof(Node));
+    node->kind = ND_IF;
+    expect("(");
+    node->cond = expr();
+    expect(")");
+    node->then = stmt();
+    if (consume_keyword(TK_ELSE)) {
+      node->els = stmt();
+    }
+    return node;
+  }
+
+  node = expr();
   expect(";");
   return node;
 }
