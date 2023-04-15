@@ -12,6 +12,8 @@ typedef enum {
   TK_RESERVED, // 記号
   TK_IF,       // if
   TK_ELSE,     // else
+  TK_WHILE,    // while
+  TK_FOR,      // for
   TK_RETURN,   // return
   TK_IDENT,    // 識別子
   TK_NUM,      // 整数
@@ -42,6 +44,8 @@ typedef enum {
   ND_ASSIGN, // =
   ND_LVAR,   // ローカル変数
   ND_IF,
+  ND_WHILE,
+  ND_FOR,
   ND_RETURN, // return
 } NodeKind;
 
@@ -54,9 +58,15 @@ struct Node {
   int val;       // kindがND_NUMの場合のみ使う
   int offset;    // kindがND_LVARの場合のみ使う
 
+  // "if" (cond) then "else" els
+  // "while" (cond) body
+  // "for" (init; cond; inc) body
   Node *cond;
   Node *then;
   Node *els;
+  Node *init;
+  Node *body;
+  Node *inc;
 };
 
 Node **parse(Token*);

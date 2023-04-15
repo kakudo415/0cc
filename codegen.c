@@ -13,6 +13,9 @@ void gen_lval(Node *node) {
 }
 
 void gen(Node *node) {
+  if (node == NULL) {
+    return;
+  }
   switch (node->kind) {
     case ND_NUM:
       printf("  push %d\n", node->val);
@@ -40,16 +43,40 @@ void gen(Node *node) {
       printf("  pop rax\n");
       printf("  cmp rax, 0\n");
       if (node->els == NULL) {
-        printf("  je .L_END_%d\n", label_unique);
+        printf("  je .L_FI_%d\n", label_unique);
         gen(node->then);
       } else {
         printf("  je .L_ELSE_%d\n", label_unique);
         gen(node->then);
-        printf("  jmp .L_END_%d\n", label_unique);
+        printf("  jmp .L_FI_%d\n", label_unique);
         printf(".L_ELSE_%d:\n", label_unique);
         gen(node->els);
       }
-      printf(".L_END_%d:\n", label_unique);
+      printf(".L_FI_%d:\n", label_unique);
+      return;
+    case ND_WHILE:
+      label_unique++;
+      printf(".L_WHILE_%d:\n", label_unique);
+      gen(node->cond);
+      printf("  pop rax\n");
+      printf("  cmp rax, 0\n");
+      printf("  je .L_ELIHW_%d\n", label_unique);
+      gen(node->body);
+      printf("  jmp .L_WHILE_%d\n", label_unique);
+      printf(".L_ELIHW_%d:\n", label_unique);
+      return;
+    case ND_FOR:
+      label_unique++;
+      gen(node->init);
+      printf(".L_FOR_%d:\n", label_unique);
+      gen(node->cond);
+      printf("  pop rax\n");
+      printf("  cmp rax, 0\n");
+      printf("  je .L_ROF_%d\n", label_unique);
+      gen(node->body);
+      gen(node->inc);
+      printf("  jmp .L_FOR_%d\n", label_unique);
+      printf(".L_ROF_%d:\n", label_unique);
       return;
     case ND_RETURN:
       gen(node->lhs);

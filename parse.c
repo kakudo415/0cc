@@ -135,6 +135,10 @@ void program() {
 }
 
 // stmt = expr ";"
+//      | "if" "(" expr ")" stmt ("else" stmt)?
+//      | "while" "(" expr ")" stmt
+//      | "for" "(" expr? ";" expr? ";" expr? ")" stmt
+//      | "return" expr ";"
 Node *stmt() {
   Node *node;
 
@@ -156,6 +160,36 @@ Node *stmt() {
     if (consume_keyword(TK_ELSE)) {
       node->els = stmt();
     }
+    return node;
+  }
+
+  if (consume_keyword(TK_WHILE)) {
+    node = calloc(1, sizeof(Node));
+    node->kind = ND_WHILE;
+    expect("(");
+    node->cond = expr();
+    expect(")");
+    node->body = stmt();
+    return node;
+  }
+
+  if (consume_keyword(TK_FOR)) {
+    node = calloc(1, sizeof(Node));
+    node->kind = ND_FOR;
+    expect("(");
+    if (!consume(";")) {
+      node->init = expr();
+      expect(";");
+    }
+    if (!consume(";")) {
+      node->cond = expr();
+      expect(";");
+    }
+    if (!consume(")")) {
+      node->inc = expr();
+      expect(")");
+    }
+    node->body = stmt();
     return node;
   }
 

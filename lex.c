@@ -67,6 +67,12 @@ Token *tokenize(char *p) {
       if (startswith(cur->str, "else"))
         cur->kind = TK_ELSE;
 
+      if (startswith(cur->str, "while"))
+        cur->kind = TK_WHILE;
+
+      if (startswith(cur->str, "for"))
+        cur->kind = TK_FOR;
+
       continue;
     }
 

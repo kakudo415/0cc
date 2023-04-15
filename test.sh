@@ -70,5 +70,11 @@ assert 3 'if (0) 10; else 3;'
 assert 5 'if (2 > 1) 5; else 3;'
 assert 7 'if (3 > 8) 2; else 7;'
 
+assert 15 'acc = 0; while (acc < 15) acc = acc + 1; acc;'
+assert 0 'acc = 0; while (0) acc = acc + 3; acc;'
+
+assert 12 'for (i = 0; i < 12; i = i + 1) i; i;'
+assert 7 'j = 0; for (; j < 7;) j = j + 1; j;'
+
 echo OK
 
