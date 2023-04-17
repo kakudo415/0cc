@@ -8,6 +8,16 @@
 void error(char*, ...);
 void error_at(char*, char*, ...);
 
+typedef struct Vec {
+  void **ptr;
+  int cap;
+  int len;
+} Vec;
+
+void *new_vec();
+void vec_push(Vec*, void*);
+void *vec_pop(Vec*);
+
 typedef enum {
   TK_RESERVED, // 記号
   TK_IF,       // if
@@ -43,6 +53,7 @@ typedef enum {
   ND_LE,  // <=
   ND_ASSIGN, // =
   ND_LVAR,   // ローカル変数
+  ND_BLOCK,
   ND_IF,
   ND_WHILE,
   ND_FOR,
@@ -67,6 +78,8 @@ struct Node {
   Node *init;
   Node *body;
   Node *inc;
+
+  Vec *stmts;
 };
 
 Node **parse(Token*);

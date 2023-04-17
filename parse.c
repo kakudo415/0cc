@@ -135,12 +135,23 @@ void program() {
 }
 
 // stmt = expr ";"
+//      | "{" stmt* "}"
 //      | "if" "(" expr ")" stmt ("else" stmt)?
 //      | "while" "(" expr ")" stmt
 //      | "for" "(" expr? ";" expr? ";" expr? ")" stmt
 //      | "return" expr ";"
 Node *stmt() {
   Node *node;
+
+  if (consume("{")) {
+    node = calloc(1, sizeof(Node));
+    node->kind = ND_BLOCK;
+    node->stmts = new_vec();
+    while(!consume("}")) {
+      vec_push(node->stmts, stmt());
+    }
+    return node;
+  }
 
   if (consume_keyword(TK_RETURN)) {
     node = calloc(1, sizeof(Node));

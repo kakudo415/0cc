@@ -78,5 +78,8 @@ assert 7 'j = 0; for (; j < 7;) j = j + 1; j;'
 
 assert 21 'a = 0; for (i = 0; i < 7; i = i + 1) for (j = 0; j < 3; j = j + 1) a = a + 1; a;'
 
+assert 128 'acc = 1; while (acc < 100) { acc = acc + acc; } return acc;'
+assert 96 'i = 0; acc = 3; while (i < 5) { acc = acc * 2; i = i + 1; } return acc;'
+
 echo OK
 

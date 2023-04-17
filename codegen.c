@@ -18,6 +18,11 @@ void gen(Node *node) {
   }
   int label;
   switch (node->kind) {
+    case ND_BLOCK:
+      for (int i = 0; i < node->stmts->len; i++) {
+        gen(node->stmts->ptr[i]);
+        printf("  pop rax\n");
+      }
     case ND_NUM:
       printf("  push %d\n", node->val);
       return;
