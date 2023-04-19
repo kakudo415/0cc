@@ -42,6 +42,10 @@ void gen(Node *node) {
       printf("  mov [rax], rdi\n");
       printf("  push rdi\n"); // （代入も式で、右辺値をさらに返すことに注意）
       return;
+    case ND_CALL:
+      printf("  call %.*s\n", node->name_len, node->name); // 「%*s」とすると「%数字s」の数字部分を変数で渡せる
+      // TODO: 引数が、レジスタを超えてスタックに渡るときは、RSPの16バイトアライメントに注意！
+      return;
     case ND_IF:
       label = label_unique++;
       printf(".L_IF_%d:\n", label);

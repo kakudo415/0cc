@@ -291,7 +291,9 @@ Node *unary() {
   return primary();
 }
 
-// primary = num | ident | "(" expr ")"
+// primary = num
+//         | ident ("(" ")")?
+//         | "(" expr ")"
 Node *primary() {
   // 次のトークンが"("なら、"(" expr ")"のはず
   if (consume("(")) {
@@ -303,23 +305,29 @@ Node *primary() {
   Token *tok = consume_ident();
   if (tok) {
     Node *node = calloc(1, sizeof(Node));
-    node->kind = ND_LVAR;
-
-    LVar *lvar = find_lvar(tok);
-    if (lvar) {
-      node->offset = lvar->offset;
+    if (consume("(")) {
+      node->kind = ND_CALL;
+      node->name = tok->str;
+      node->name_len = tok->len;
+      expect(")");
     } else {
-      lvar = calloc(1, sizeof(LVar));
-      lvar->next = locals; // 新しく使用された変数を変数リストの先頭に追加
-      lvar->name = tok->str;
-      lvar->len = tok->len;
-      if (locals == NULL) {
-        lvar->offset = 8;
+      node->kind = ND_LVAR;
+      LVar *lvar = find_lvar(tok);
+      if (lvar) {
+        node->offset = lvar->offset;
       } else {
-        lvar->offset = locals->offset + 8;
+        lvar = calloc(1, sizeof(LVar));
+        lvar->next = locals; // 新しく使用された変数を変数リストの先頭に追加
+        lvar->name = tok->str;
+        lvar->len = tok->len;
+        if (locals == NULL) {
+          lvar->offset = 8;
+        } else {
+          lvar->offset = locals->offset + 8;
+        }
+        node->offset = lvar->offset;
+        locals = lvar;
       }
-      node->offset = lvar->offset;
-      locals = lvar;
     }
     return node;
   }

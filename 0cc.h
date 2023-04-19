@@ -53,6 +53,7 @@ typedef enum {
   ND_LE,  // <=
   ND_ASSIGN, // =
   ND_LVAR,   // ローカル変数
+  ND_CALL,   // 関数呼び出し
   ND_BLOCK,
   ND_IF,
   ND_WHILE,
@@ -68,6 +69,9 @@ struct Node {
   Node *rhs;     // 右辺
   int val;       // kindがND_NUMの場合のみ使う
   int offset;    // kindがND_LVARの場合のみ使う
+
+  char *name;    // kindがND_CALLの場合のみ使う
+  int name_len;  // name文字列の長さ
 
   // "if" (cond) then "else" els
   // "while" (cond) body
