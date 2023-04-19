@@ -307,9 +307,17 @@ Node *primary() {
     Node *node = calloc(1, sizeof(Node));
     if (consume("(")) {
       node->kind = ND_CALL;
-      node->name = tok->str;
-      node->name_len = tok->len;
+      node->name = strndup(tok->str, tok->len);
+      if (consume(")")) {
+        return node;
+      }
+      node->args = new_vec();
+      vec_push(node->args, expr());
+      while (consume(",")) {
+        vec_push(node->args, expr());
+      }
       expect(")");
+      return node;
     } else {
       node->kind = ND_LVAR;
       LVar *lvar = find_lvar(tok);

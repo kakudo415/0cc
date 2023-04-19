@@ -1,3 +1,4 @@
+#define _POSIX_C_SOURCE 200809L
 #include <ctype.h>
 #include <stdarg.h>
 #include <stdbool.h>
@@ -71,7 +72,7 @@ struct Node {
   int offset;    // kindがND_LVARの場合のみ使う
 
   char *name;    // kindがND_CALLの場合のみ使う
-  int name_len;  // name文字列の長さ
+  Vec *args;
 
   // "if" (cond) then "else" els
   // "while" (cond) body

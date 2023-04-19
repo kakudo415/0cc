@@ -43,7 +43,28 @@ void gen(Node *node) {
       printf("  push rdi\n"); // （代入も式で、右辺値をさらに返すことに注意）
       return;
     case ND_CALL:
-      printf("  call %.*s\n", node->name_len, node->name); // 「%*s」とすると「%数字s」の数字部分を変数で渡せる
+      for (int i = 0; i < node->args->len; i++) {
+        gen(node->args->ptr[i]);
+      }
+      if (node->args->len >= 6) {
+        printf("  pop r9\n"); // 第6引数
+      }
+      if (node->args->len >= 5) {
+        printf("  pop r8\n"); // 第5引数
+      }
+      if (node->args->len >= 4) {
+        printf("  pop rcx\n"); // 第4引数
+      }
+      if (node->args->len >= 3) {
+        printf("  pop rdx\n"); // 第3引数
+      }
+      if (node->args->len >= 2) {
+        printf("  pop rsi\n"); // 第2引数
+      }
+      if (node->args->len >= 1) {
+        printf("  pop rdi\n"); // 第1引数
+      }
+      printf("  call %s\n", node->name); // 「%*s」とすると「%数字s」の数字部分を変数で渡せる
       // TODO: 引数が、レジスタを超えてスタックに渡るときは、RSPの16バイトアライメントに注意！
       return;
     case ND_IF:
