@@ -28,5 +28,7 @@ assert 128 'baibai(acc) { while (acc < 100) { acc = acc + acc; } return acc; } m
 
 assert 105 'countsum(c) { sum = 0; for (i = 0; i <= c; i = i + 1) { sum = sum + i; } return sum; } main() { countsum(14); }'
 
+assert 3 'main() { x = 3; y = &x; return *y; }'
+
 echo OK
 

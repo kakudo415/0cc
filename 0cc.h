@@ -54,6 +54,8 @@ typedef enum {
   ND_NE,  // !=
   ND_LT,  // <
   ND_LE,  // <=
+  ND_DEREF, // *
+  ND_ADDR,  // &
   ND_ASSIGN, // =
   ND_LVAR,   // ローカル変数
   ND_CALL,   // 関数呼び出し
