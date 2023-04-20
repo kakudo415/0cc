@@ -26,5 +26,7 @@ assert 144 'fib(n) { if (n >= 2) { return fib(n - 1) + fib(n - 2); } return 1; }
 
 assert 128 'baibai(acc) { while (acc < 100) { acc = acc + acc; } return acc; } main() { return baibai(1); }'
 
+assert 105 'countsum(c) { sum = 0; for (i = 0; i <= c; i = i + 1) { sum = sum + i; } return sum; } main() { countsum(14); }'
+
 echo OK
 

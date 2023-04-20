@@ -78,6 +78,7 @@ struct Node {
   char *name;
   Vec *args;
   Vec *params;
+  Vec *lvars;
 
   // "if" (cond) then "else" els
   // "while" (cond) body

@@ -81,25 +81,6 @@ bool at_eof() {
   return token->kind == TK_EOF;
 }
 
-// ローカル変数を管理する連結リスト
-typedef struct LVar LVar;
-struct LVar {
-  LVar *next;
-  char *name;
-  int len;
-  int offset;
-};
-LVar *locals;
-
-// ローカル変数を名前で検索する
-LVar *find_lvar(Token *tok) {
-  for (LVar *var = locals; var; var = var->next) {
-    if (var->len == tok->len && !memcmp(tok->str, var->name, var->len))
-      return var;
-  }
-  return NULL;
-}
-
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs) {
   Node *node = calloc(1, sizeof(Node));
   node->kind = kind;
@@ -129,6 +110,17 @@ Node *primary();
 
 Vec *lvars;
 
+// ローカル変数を名前で検索する
+Var *find_lvar(Token *tok) {
+  for (int i = 0; i < lvars->len; i++) {
+    Var *lvar = lvars->ptr[i];
+    if (strlen(lvar->name) == tok->len && !memcmp(lvar->name, tok->str, tok->len)) {
+      return lvar;
+    }
+  }
+  return NULL;
+}
+
 Node *parse(Token *head) {
   token = head;
   prog = calloc(1, sizeof(Node));
@@ -153,20 +145,23 @@ void global() {
       if (node->params->len > 0) {
         expect(",");
       }
-      vec_push(node->params, param());
+      Var *p = param();
+      vec_push(node->params, p);
+      vec_push(lvars, p);
     }
-    vec_push(prog->funcs, node);
     node->body = stmt();
+    node->lvars = lvars;
+    vec_push(prog->funcs, node);
     return;
   }
 }
 
 Var *param() {
   Token *ident = consume_ident();
-  Var *lvar = calloc(1, sizeof(Var));
-  lvar->name = strndup(ident->str, ident->len);
-  lvar->offset = 8 * (lvars->len + 1);
-  return lvar;
+  Var *p = calloc(1, sizeof(Var));
+  p->name = strndup(ident->str, ident->len);
+  p->offset = 8 * (lvars->len + 1);
+  return p;
 }
 
 // stmt = expr ";"
@@ -355,22 +350,19 @@ Node *primary() {
       return node;
     } else {
       node->kind = ND_LVAR;
-      LVar *lvar = find_lvar(tok);
-      if (lvar) {
-        node->offset = lvar->offset;
-      } else {
-        lvar = calloc(1, sizeof(LVar));
-        lvar->next = locals; // 新しく使用された変数を変数リストの先頭に追加
-        lvar->name = tok->str;
-        lvar->len = tok->len;
-        if (locals == NULL) {
+      Var *lvar = find_lvar(tok);
+      if (lvar == NULL) {
+        lvar = calloc(1, sizeof(Var));
+        lvar->name = strndup(tok->str, tok->len);
+        if (lvars->len == 0) {
           lvar->offset = 8;
         } else {
-          lvar->offset = locals->offset + 8;
+          Var *last = lvars->ptr[lvars->len - 1];
+          lvar->offset = last->offset + 8;
         }
-        node->offset = lvar->offset;
-        locals = lvar;
+        vec_push(lvars, lvar);
       }
+      node->offset = lvar->offset;
     }
     return node;
   }

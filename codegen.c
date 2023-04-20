@@ -41,6 +41,7 @@ void gen(Node *node) {
       if (node->params->len >= 6) {
         printf("  push r9\n");
       }
+      printf("  sub rsp, %d\n", 8 * (node->lvars->len - node->params->len));
       gen(node->body);
       // エピローグ
       printf("  mov rsp, rbp\n");   // スタックを崩す
