@@ -43,6 +43,8 @@ struct Token {
 Token *tokenize(char*);
 
 typedef enum {
+  ND_PROGRAM,
+  ND_FUNC,    // 関数定義
   ND_ADD, // +
   ND_SUB, // -
   ND_MUL, // *
@@ -71,8 +73,11 @@ struct Node {
   int val;       // kindがND_NUMの場合のみ使う
   int offset;    // kindがND_LVARの場合のみ使う
 
-  char *name;    // kindがND_CALLの場合のみ使う
+  // CALL: name(arg, arg, ...)
+  // DEF:  name(param, param, ...)
+  char *name;
   Vec *args;
+  Vec *params;
 
   // "if" (cond) then "else" els
   // "while" (cond) body
@@ -84,9 +89,19 @@ struct Node {
   Node *body;
   Node *inc;
 
+  // Compound Statement
   Vec *stmts;
+
+  // Top Level Declarations
+  Vec *funcs;
 };
 
-Node **parse(Token*);
+typedef struct Var Var;
+struct Var {
+  char *name;
+  int offset;
+};
+
+Node *parse(Token*);
 
 void gen(Node*);

@@ -1,6 +1,6 @@
 #include "0cc.h"
 
-Node *code[100];
+Node *prog;
 
 // 入力プログラム
 extern char *user_input;
@@ -115,7 +115,8 @@ Node *new_node_num(int val) {
   return node;
 }
 
-void program();
+void global();
+Var *param();
 Node *stmt();
 Node *expr();
 Node *assign();
@@ -126,12 +127,46 @@ Node *mul();
 Node *unary();
 Node *primary();
 
-// program = stmt*
-void program() {
-  int i = 0;
-  while (!at_eof())
-    code[i++] = stmt();
-  code[i] = NULL;
+Vec *lvars;
+
+Node *parse(Token *head) {
+  token = head;
+  prog = calloc(1, sizeof(Node));
+  prog->funcs = new_vec();
+  while (!at_eof()) {
+    global();
+  }
+  return prog;
+}
+
+void global() {
+  Node *node = calloc(1, sizeof(Node));
+  Token *ident = consume_ident();
+  node->name = strndup(ident->str, ident->len);
+
+  // Function Definition
+  if (consume("(")) {
+    node->kind = ND_FUNC;
+    node->params = new_vec();
+    lvars = new_vec();
+    while (!consume(")")) {
+      if (node->params->len > 0) {
+        expect(",");
+      }
+      vec_push(node->params, param());
+    }
+    vec_push(prog->funcs, node);
+    node->body = stmt();
+    return;
+  }
+}
+
+Var *param() {
+  Token *ident = consume_ident();
+  Var *lvar = calloc(1, sizeof(Var));
+  lvar->name = strndup(ident->str, ident->len);
+  lvar->offset = 8 * (lvars->len + 1);
+  return lvar;
 }
 
 // stmt = expr ";"
@@ -342,10 +377,4 @@ Node *primary() {
 
   // そうでなければ数値のはず
   return new_node_num(expect_number());
-}
-
-Node **parse(Token *head) {
-  token = head;
-  program();
-  return code;
 }

@@ -18,11 +18,41 @@ void gen(Node *node) {
   }
   int label;
   switch (node->kind) {
+    case ND_FUNC:
+      printf("%s:\n", node->name);
+      // プロローグ
+      printf("  push rbp\n");       // 関数呼び出し前のベースポインタをスタックに積む
+      printf("  mov rbp, rsp\n");   // ベースポインタを更新
+      if (node->params->len >= 1) {
+        printf("  push rdi\n");
+      }
+      if (node->params->len >= 2) {
+        printf("  push rsi\n");
+      }
+      if (node->params->len >= 3) {
+        printf("  push rdx\n");
+      }
+      if (node->params->len >= 4) {
+        printf("  push rcx\n");
+      }
+      if (node->params->len >= 5) {
+        printf("  push r8\n");
+      }
+      if (node->params->len >= 6) {
+        printf("  push r9\n");
+      }
+      gen(node->body);
+      // エピローグ
+      printf("  mov rsp, rbp\n");   // スタックを崩す
+      printf("  pop rbp\n");        // 積んでおいた関数呼び出し前のベースポインタを思い出す
+      printf("  ret\n");
+      return;
     case ND_BLOCK:
       for (int i = 0; i < node->stmts->len; i++) {
         gen(node->stmts->ptr[i]);
         printf("  pop rax\n");
       }
+      return;
     case ND_NUM:
       printf("  push %d\n", node->val);
       return;
@@ -65,6 +95,7 @@ void gen(Node *node) {
         printf("  pop rdi\n"); // 第1引数
       }
       printf("  call %s\n", node->name); // 「%*s」とすると「%数字s」の数字部分を変数で渡せる
+      printf("  push rax\n");            // 返り値をスタックに積む
       // TODO: 引数が、レジスタを超えてスタックに渡るときは、RSPの16バイトアライメントに注意！
       return;
     case ND_IF:
@@ -84,6 +115,7 @@ void gen(Node *node) {
         gen(node->els);
       }
       printf(".L_FI_%d:\n", label);
+      printf("  push rax\n"); // 文もあとでpopされてしまう問題の対症療法
       return;
     case ND_WHILE:
       label = label_unique++;
@@ -95,6 +127,7 @@ void gen(Node *node) {
       gen(node->body);
       printf("  jmp .L_WHILE_%d\n", label);
       printf(".L_ELIHW_%d:\n", label);
+      printf("  push rax\n"); // 文もあとでpopされてしまう問題の対症療法
       return;
     case ND_FOR:
       label = label_unique++;
@@ -108,6 +141,7 @@ void gen(Node *node) {
       gen(node->inc);
       printf("  jmp .L_FOR_%d\n", label);
       printf(".L_ROF_%d:\n", label);
+      printf("  push rax\n"); // 文もあとでpopされてしまう問題の対症療法
       return;
     case ND_RETURN:
       gen(node->lhs);
