@@ -132,6 +132,8 @@ Node *parse(Token *head) {
 }
 
 void global() {
+  expect("int");
+
   Node *node = calloc(1, sizeof(Node));
   Token *ident = consume_ident();
   node->name = strndup(ident->str, ident->len);
@@ -157,6 +159,7 @@ void global() {
 }
 
 Var *param() {
+  expect("int");
   Token *ident = consume_ident();
   Var *p = calloc(1, sizeof(Var));
   p->name = strndup(ident->str, ident->len);
@@ -181,6 +184,16 @@ Node *stmt() {
       vec_push(node->stmts, stmt());
     }
     return node;
+  }
+
+  if (consume("int")) {
+    Token *ident = consume_ident();
+    Var *lvar = calloc(1, sizeof(Var));
+    lvar->name = strndup(ident->str, ident->len);
+    lvar->offset = 8 * (lvars->len + 1);
+    vec_push(lvars, lvar);
+    expect(";");
+    return NULL;
   }
 
   if (consume_keyword(TK_RETURN)) {
@@ -352,22 +365,13 @@ Node *primary() {
       }
       expect(")");
       return node;
-    } else {
-      node->kind = ND_LVAR;
-      Var *lvar = find_lvar(tok);
-      if (lvar == NULL) {
-        lvar = calloc(1, sizeof(Var));
-        lvar->name = strndup(tok->str, tok->len);
-        if (lvars->len == 0) {
-          lvar->offset = 8;
-        } else {
-          Var *last = lvars->ptr[lvars->len - 1];
-          lvar->offset = last->offset + 8;
-        }
-        vec_push(lvars, lvar);
-      }
-      node->offset = lvar->offset;
     }
+    node->kind = ND_LVAR;
+    Var *lvar = find_lvar(tok);
+    if (lvar == NULL) {
+      error("未定義の変数です → %.*s\n", tok->len, tok->str);
+    }
+    node->offset = lvar->offset;
     return node;
   }
 

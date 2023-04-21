@@ -16,19 +16,32 @@ assert() {
   fi
 }
 
-assert 47 'main() { return 5 + 6 * 7; }'
-assert 4 'main() { return (3 + 5) / 2; }'
+assert 47 'int main() { return 5 + 6 * 7; }'
+assert 4 'int main() { return (3 + 5) / 2; }'
 
-assert 5 'add(x, y) { return x + y; } main() { return add(2, 3); }'
-assert 100 'addd(c, x) { if (c > 0) { return x + addd(c - 1, x); } else { return 0; } } main() { addd(20, 5); }'
+assert 5 'int add(int x, int y) { return x + y; } int main() { return add(2, 3); }'
+assert 100 'int addd(int c, int x) { if (c > 0) { return x + addd(c - 1, x); } else { return 0; } } int main() { addd(20, 5); }'
 
-assert 144 'fib(n) { if (n >= 2) { return fib(n - 1) + fib(n - 2); } return 1; } main() { return fib(11); }'
+assert 144 'int fib(int n) { if (n >= 2) { return fib(n - 1) + fib(n - 2); } return 1; } int main() { return fib(11); }'
 
-assert 128 'baibai(acc) { while (acc < 100) { acc = acc + acc; } return acc; } main() { return baibai(1); }'
+assert 128 'int baibai(int acc) { while (acc < 100) { acc = acc + acc; } return acc; } int main() { return baibai(1); }'
 
-assert 105 'countsum(c) { sum = 0; for (i = 0; i <= c; i = i + 1) { sum = sum + i; } return sum; } main() { countsum(14); }'
+assert 105 '
+int countsum(int c) {
+  int sum;
+  sum = 0;
+  int i;
+  for (i = 0; i <= c; i = i + 1) {
+    sum = sum + i;
+  }
+  return sum;
+}
+int main() {
+  return countsum(14);
+}
+'
 
-assert 3 'main() { x = 3; y = &x; return *y; }'
+assert 3 'int main() { int x; x = 3; int y; y = &x; return *y; }'
 
 echo OK
 

@@ -33,8 +33,9 @@ docker run --rm -v {ホストのディレクトリ}:{コンテナ内のディレ
 
 ```ebnf
 program    = funcdef*
-funcdef    = ident "(" ident ("(" param? ("," param )* ")")? ")" "{" stmt* "}"
-stmt       = expr ";"
+funcdef    = "int" ident "(" ("int" ident)? ("," "int" ident)*  ")" "{" stmt* "}"
+stmt       = "int" ident;
+           | expr ";"
            | "{" stmt* "}"
            | "if" "(" expr ")" stmt ("else" stmt)?
            | "while" "(" expr ")" stmt

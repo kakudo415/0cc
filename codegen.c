@@ -14,6 +14,7 @@ void gen_lval(Node *node) {
 
 void gen(Node *node) {
   if (node == NULL) {
+    printf("  push 0\n"); // 空文も後でpopされてしまうので、対症療法
     return;
   }
   int label;
