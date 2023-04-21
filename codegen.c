@@ -2,11 +2,20 @@
 
 int label_unique;
 
+void gen_lval(Node *);
+void gen_expr(Node *);
+void gen_stmt(Node *);
+
 // ベースポインタ(RBP)からのオフセットを利用して、ローカル変数のアドレスをスタックトップに置く
 void gen_lval(Node *node) {
-  if (node->kind != ND_LVAR)
+  if (node->kind != ND_DEREF && node->kind != ND_LVAR)
     error("代入の左辺値が変数ではありません");
-  
+
+  if (node->kind == ND_DEREF) {
+    gen_expr(node->lhs);
+    return;
+  }
+
   printf("  mov rax, rbp\n");
   printf("  sub rax, %d\n", node->offset);
   printf("  push rax\n");

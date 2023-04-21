@@ -98,6 +98,7 @@ Node *new_node_num(int val) {
 
 void global();
 Var *param();
+Type *typ();
 Node *stmt();
 Node *expr();
 Node *assign();
@@ -159,12 +160,25 @@ void global() {
 }
 
 Var *param() {
-  expect("int");
-  Token *ident = consume_ident();
   Var *p = calloc(1, sizeof(Var));
+  p->typ = typ();
+  Token *ident = consume_ident();
   p->name = strndup(ident->str, ident->len);
   p->offset = 8 * (lvars->len + 1);
   return p;
+}
+
+Type *typ() {
+  expect("int");
+  Type *node = calloc(1, sizeof(Type));
+  node->typ = TY_INT;
+  while (consume("*")) {
+    Type *pnode = calloc(1, sizeof(Type));
+    pnode->typ = TY_PTR;
+    pnode->ptr_to = node;
+    node = pnode;
+  }
+  return node;
 }
 
 // stmt = expr ";"
@@ -184,16 +198,6 @@ Node *stmt() {
       vec_push(node->stmts, stmt());
     }
     return node;
-  }
-
-  if (consume("int")) {
-    Token *ident = consume_ident();
-    Var *lvar = calloc(1, sizeof(Var));
-    lvar->name = strndup(ident->str, ident->len);
-    lvar->offset = 8 * (lvars->len + 1);
-    vec_push(lvars, lvar);
-    expect(";");
-    return NULL;
   }
 
   if (consume_keyword(TK_RETURN)) {
@@ -245,6 +249,17 @@ Node *stmt() {
     }
     node->body = stmt();
     return node;
+  }
+
+  if (startswith(token->str, "int")) {
+    Var *lvar = calloc(1, sizeof(Var));
+    lvar->typ = typ();
+    Token *name = consume_ident();
+    lvar->name = strndup(name->str, name->len);
+    lvar->offset = 8 * (lvars->len + 1);
+    vec_push(lvars, lvar);
+    expect(";");
+    return NULL;
   }
 
   node = expr();
@@ -372,6 +387,7 @@ Node *primary() {
       error("未定義の変数です → %.*s\n", tok->len, tok->str);
     }
     node->offset = lvar->offset;
+    node->typ = lvar->typ;
     return node;
   }
 

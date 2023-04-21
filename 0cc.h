@@ -40,7 +40,19 @@ struct Token {
   int len;        // トークンの長さ
 };
 
+bool startswith(char *, char *);
 Token *tokenize(char*);
+
+typedef enum {
+  TY_INT,
+  TY_PTR,
+} TypeKind;
+
+typedef struct Type Type;
+struct Type {
+  TypeKind typ;
+  struct Type *ptr_to;
+};
 
 typedef enum {
   ND_PROGRAM,
@@ -74,6 +86,7 @@ struct Node {
   Node *rhs;     // 右辺
   int val;       // kindがND_NUMの場合のみ使う
   int offset;    // kindがND_LVARの場合のみ使う
+  Type *typ;
 
   // CALL: name(arg, arg, ...)
   // DEF:  name(param, param, ...)
@@ -103,6 +116,7 @@ typedef struct Var Var;
 struct Var {
   char *name;
   int offset;
+  Type *typ;
 };
 
 Node *parse(Token*);
