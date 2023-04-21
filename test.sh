@@ -20,7 +20,7 @@ assert 47 'int main() { return 5 + 6 * 7; }'
 assert 4 'int main() { return (3 + 5) / 2; }'
 
 assert 5 'int add(int x, int y) { return x + y; } int main() { return add(2, 3); }'
-assert 100 'int addd(int c, int x) { if (c > 0) { return x + addd(c - 1, x); } else { return 0; } } int main() { addd(20, 5); }'
+assert 100 'int addd(int c, int x) { if (c > 0) { return x + addd(c - 1, x); } else { return 0; } } int main() { return addd(20, 5); }'
 
 assert 144 'int fib(int n) { if (n >= 2) { return fib(n - 1) + fib(n - 2); } return 1; } int main() { return fib(11); }'
 

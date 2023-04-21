@@ -12,49 +12,13 @@ void gen_lval(Node *node) {
   printf("  push rax\n");
 }
 
-void gen(Node *node) {
+void gen_expr(Node *node) {
   if (node == NULL) {
-    printf("  push 0\n"); // 空文も後でpopされてしまうので、対症療法
+    error("あるべき場所に式がありません\n");
     return;
   }
-  int label;
+
   switch (node->kind) {
-    case ND_FUNC:
-      printf("%s:\n", node->name);
-      // プロローグ
-      printf("  push rbp\n");       // 関数呼び出し前のベースポインタをスタックに積む
-      printf("  mov rbp, rsp\n");   // ベースポインタを更新
-      if (node->params->len >= 1) {
-        printf("  push rdi\n");
-      }
-      if (node->params->len >= 2) {
-        printf("  push rsi\n");
-      }
-      if (node->params->len >= 3) {
-        printf("  push rdx\n");
-      }
-      if (node->params->len >= 4) {
-        printf("  push rcx\n");
-      }
-      if (node->params->len >= 5) {
-        printf("  push r8\n");
-      }
-      if (node->params->len >= 6) {
-        printf("  push r9\n");
-      }
-      printf("  sub rsp, %d\n", 8 * (node->lvars->len - node->params->len));
-      gen(node->body);
-      // エピローグ
-      printf("  mov rsp, rbp\n");   // スタックを崩す
-      printf("  pop rbp\n");        // 積んでおいた関数呼び出し前のベースポインタを思い出す
-      printf("  ret\n");
-      return;
-    case ND_BLOCK:
-      for (int i = 0; i < node->stmts->len; i++) {
-        gen(node->stmts->ptr[i]);
-        printf("  pop rax\n");
-      }
-      return;
     case ND_NUM:
       printf("  push %d\n", node->val);
       return;
@@ -67,8 +31,7 @@ void gen(Node *node) {
       return;
     case ND_ASSIGN:
       gen_lval(node->lhs);
-      gen(node->rhs);
-
+      gen_expr(node->rhs);
       printf("  pop rdi\n");  // 右辺値
       printf("  pop rax\n");  // 左辺値（変数のアドレス）
       printf("  mov [rax], rdi\n");
@@ -76,7 +39,7 @@ void gen(Node *node) {
       return;
     case ND_CALL:
       for (int i = 0; i < node->args->len; i++) {
-        gen(node->args->ptr[i]);
+        gen_expr(node->args->ptr[i]);
       }
       if (node->args->len >= 6) {
         printf("  pop r9\n"); // 第6引数
@@ -100,60 +63,8 @@ void gen(Node *node) {
       printf("  push rax\n");            // 返り値をスタックに積む
       // TODO: 引数が、レジスタを超えてスタックに渡るときは、RSPの16バイトアライメントに注意！
       return;
-    case ND_IF:
-      label = label_unique++;
-      printf(".L_IF_%d:\n", label);
-      gen(node->cond);
-      printf("  pop rax\n");
-      printf("  cmp rax, 0\n");
-      if (node->els == NULL) {
-        printf("  je .L_FI_%d\n", label);
-        gen(node->then);
-      } else {
-        printf("  je .L_ELSE_%d\n", label);
-        gen(node->then);
-        printf("  jmp .L_FI_%d\n", label);
-        printf(".L_ELSE_%d:\n", label);
-        gen(node->els);
-      }
-      printf(".L_FI_%d:\n", label);
-      printf("  push rax\n"); // 文もあとでpopされてしまう問題の対症療法
-      return;
-    case ND_WHILE:
-      label = label_unique++;
-      printf(".L_WHILE_%d:\n", label);
-      gen(node->cond);
-      printf("  pop rax\n");
-      printf("  cmp rax, 0\n");
-      printf("  je .L_ELIHW_%d\n", label);
-      gen(node->body);
-      printf("  jmp .L_WHILE_%d\n", label);
-      printf(".L_ELIHW_%d:\n", label);
-      printf("  push rax\n"); // 文もあとでpopされてしまう問題の対症療法
-      return;
-    case ND_FOR:
-      label = label_unique++;
-      gen(node->init);
-      printf(".L_FOR_%d:\n", label);
-      gen(node->cond);
-      printf("  pop rax\n");
-      printf("  cmp rax, 0\n");
-      printf("  je .L_ROF_%d\n", label);
-      gen(node->body);
-      gen(node->inc);
-      printf("  jmp .L_FOR_%d\n", label);
-      printf(".L_ROF_%d:\n", label);
-      printf("  push rax\n"); // 文もあとでpopされてしまう問題の対症療法
-      return;
-    case ND_RETURN:
-      gen(node->lhs);
-      printf("  pop rax\n");
-      printf("  mov rsp, rbp\n");
-      printf("  pop rbp\n");
-      printf("  ret\n");
-      return;
     case ND_DEREF:
-      gen(node->lhs);
+      gen_expr(node->lhs);
       printf("  pop rax\n");
       printf("  mov rax, [rax]\n");
       printf("  push rax\n");
@@ -163,8 +74,8 @@ void gen(Node *node) {
       return;
   }
 
-  gen(node->lhs);
-  gen(node->rhs);
+  gen_expr(node->lhs);
+  gen_expr(node->rhs);
 
   printf("  pop rdi\n");
   printf("  pop rax\n");
@@ -206,4 +117,108 @@ void gen(Node *node) {
   }
 
   printf("  push rax\n");
+}
+
+void gen_stmt(Node *node) {
+  if (node == NULL) {
+    return;
+  }
+
+  int label = label_unique++;
+  switch (node->kind) {
+    case ND_BLOCK:
+      for (int i = 0; i < node->stmts->len; i++) {
+        gen_stmt(node->stmts->ptr[i]);
+      }
+      return;
+    case ND_IF:
+      printf(".L_IF_%d:\n", label);
+      gen_expr(node->cond);
+      printf("  pop rax\n");
+      printf("  cmp rax, 0\n");
+      if (node->els == NULL) {
+        printf("  je .L_FI_%d\n", label);
+        gen_stmt(node->then);
+      } else {
+        printf("  je .L_ELSE_%d\n", label);
+        gen_stmt(node->then);
+        printf("  jmp .L_FI_%d\n", label);
+        printf(".L_ELSE_%d:\n", label);
+        gen_stmt(node->els);
+      }
+      printf(".L_FI_%d:\n", label);
+      return;
+    case ND_WHILE:
+      printf(".L_WHILE_%d:\n", label);
+      gen_expr(node->cond);
+      printf("  pop rax\n");
+      printf("  cmp rax, 0\n");
+      printf("  je .L_ELIHW_%d\n", label);
+      gen_stmt(node->body);
+      printf("  jmp .L_WHILE_%d\n", label);
+      printf(".L_ELIHW_%d:\n", label);
+      return;
+    case ND_FOR:
+      gen_expr(node->init);
+      printf("  pop rax\n"); // 初期化式の返り値は利用しない
+      printf(".L_FOR_%d:\n", label);
+      gen_expr(node->cond);
+      printf("  pop rax\n");
+      printf("  cmp rax, 0\n");
+      printf("  je .L_ROF_%d\n", label);
+      gen_stmt(node->body);
+      gen_expr(node->inc);
+      printf("  pop rax\n"); // 更新式の返り値は利用しない
+      printf("  jmp .L_FOR_%d\n", label);
+      printf(".L_ROF_%d:\n", label);
+      return;
+    case ND_RETURN:
+      gen_expr(node->lhs);
+      // エピローグ
+      printf("  pop rax\n");
+      printf("  mov rsp, rbp\n");
+      printf("  pop rbp\n");
+      printf("  ret\n");
+      return;
+  }
+  gen_expr(node);
+  printf("  pop rax\n"); // 文としての式は返り値を利用しない
+}
+
+void gen(Node *prog) {
+  // アセンブリの前半部分を出力
+  printf(".intel_syntax noprefix\n");
+  printf(".global main\n");
+
+  for (int i = 0; i < prog->funcs->len; i++) {
+    Node *func = prog->funcs->ptr[i];
+    switch (func->kind) {
+      case ND_FUNC:
+        printf("%s:\n", func->name);
+        // プロローグ
+        printf("  push rbp\n");     // 関数呼び出し前のベースポインタをスタックに積む
+        printf("  mov rbp, rsp\n"); // ベースポインタを更新
+        if (func->params->len >= 1) {
+          printf("  push rdi\n");
+        }
+        if (func->params->len >= 2) {
+          printf("  push rsi\n");
+        }
+        if (func->params->len >= 3) {
+          printf("  push rdx\n");
+        }
+        if (func->params->len >= 4) {
+          printf("  push rcx\n");
+        }
+        if (func->params->len >= 5) {
+          printf("  push r8\n");
+        }
+        if (func->params->len >= 6) {
+          printf("  push r9\n");
+        }
+        printf("  sub rsp, %d\n", 8 * (func->lvars->len - func->params->len));
+        gen_stmt(func->body);
+        continue;
+    }
+  }
 }
