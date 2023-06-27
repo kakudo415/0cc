@@ -4,7 +4,8 @@ assert() {
   input="$2"
 
   ./0cc "$input" > tmp.s
-  cc -o tmp tmp.s
+  cc -o tmp.o -c tmp.s
+  cc -o tmp tmp.o helper.o
   ./tmp
   actual="$?"
 
@@ -50,6 +51,30 @@ int main() {
   y = &x;
   *y = 3;
   return x;
+}
+'
+
+assert 4 '
+int main() {
+  int *p;
+  alloc4(&p, 1, 2, 4, 8);
+  int *q;
+  q = p + 2;
+  return *q;
+}
+'
+
+# *s is needed because of 16bit alignment!!!
+assert 3 '
+int main() {
+  int *p;
+  alloc4(&p, 1, 3, 5, 7);
+  int *q;
+  q = p + 3;
+  int *r;
+  r = q - 2;
+  int *s;
+  return *r;
 }
 '
 

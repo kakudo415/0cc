@@ -91,9 +91,25 @@ void gen_expr(Node *node) {
 
   switch (node->kind) {
     case ND_ADD:
+      if (node->lhs->kind == ND_LVAR && node->lhs->typ->typ == TY_PTR) {
+        if (node->lhs->typ->ptr_to->typ == TY_INT) {
+          printf("  imul rdi, 4\n");
+        }
+        if (node->lhs->typ->ptr_to->typ == TY_PTR) {
+          printf("  imul rdi, 8\n");
+        }
+      }
       printf("  add rax, rdi\n");
       break;
     case ND_SUB:
+      if (node->lhs->kind == ND_LVAR && node->lhs->typ->typ == TY_PTR) {
+        if (node->lhs->typ->ptr_to->typ == TY_INT) {
+          printf("  imul rdi, 4\n");
+        }
+        if (node->lhs->typ->ptr_to->typ == TY_PTR) {
+          printf("  imul rdi, 8\n");
+        }
+      }
       printf("  sub rax, rdi\n");
       break;
     case ND_MUL:
