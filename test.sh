@@ -78,5 +78,20 @@ int main() {
 }
 '
 
+assert 8 '
+int main() {
+  int *p;
+  return sizeof(*p + 2);
+}
+'
+
+assert 4 '
+int main() {
+  int a;
+  a = 5;
+  return sizeof(-a + 5);
+}
+'
+
 echo OK
 

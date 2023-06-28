@@ -86,6 +86,20 @@ Node *new_node(NodeKind kind, Node *lhs, Node *rhs) {
   node->kind = kind;
   node->lhs = lhs;
   node->rhs = rhs;
+  // TODO: Implement proper type inference
+  Type *typ = calloc(1, sizeof(Type));
+  typ->typ = TY_INT;
+  if (node->lhs != NULL) {
+    if (node->lhs->typ->typ == TY_PTR) {
+      typ->typ = TY_PTR;
+    }
+  }
+  if (node->rhs != NULL) {
+    if (node->rhs->typ->typ == TY_PTR) {
+      typ->typ = TY_PTR;
+    }
+  }
+  node->typ = typ;
   return node;
 }
 
@@ -93,6 +107,9 @@ Node *new_node_num(int val) {
   Node *node = calloc(1, sizeof(Node));
   node->kind = ND_NUM;
   node->val = val;
+  Type *typ = calloc(1, sizeof(Type));
+  typ->typ = TY_INT;
+  node->typ = typ;
   return node;
 }
 
@@ -342,6 +359,14 @@ Node *mul() {
 
 // unary = ("+" | "-")? primary
 Node *unary() {
+  if (consume_keyword(TK_SIZEOF)) {
+    Node *operand = unary();
+    if (operand->typ->typ == TY_PTR) {
+      return new_node_num(8);
+    } else if (operand->typ->typ == TY_INT) {
+      return new_node_num(4);
+    }
+  }
   if (consume("+"))
     return primary();                                    // +x = x
   if (consume("-"))
@@ -370,6 +395,10 @@ Node *primary() {
     if (consume("(")) {
       node->kind = ND_CALL;
       node->name = strndup(tok->str, tok->len);
+      // TODO: Implement proper function type inference
+      Type *typ = calloc(1, sizeof(Type));
+      typ->typ = TY_INT;
+      node->typ = typ;
       if (consume(")")) {
         return node;
       }

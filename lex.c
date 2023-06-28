@@ -75,6 +75,9 @@ Token *tokenize(char *p) {
       
       if (startswith(cur->str, "int"))
         cur->kind = TK_RESERVED;
+      
+      if (startswith(cur->str, "sizeof"))
+        cur->kind = TK_SIZEOF;
 
       continue;
     }
