@@ -99,6 +99,9 @@ Node *new_node(NodeKind kind, Node *lhs, Node *rhs) {
       typ->typ = TY_PTR;
     }
   }
+  if (node->kind == ND_DEREF) {
+    typ->typ = node->lhs->typ->ptr_to->typ;
+  }
   node->typ = typ;
   return node;
 }

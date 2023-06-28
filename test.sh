@@ -42,7 +42,7 @@ int main() {
 }
 '
 
-assert 3 'int main() { int x; x = 3; int y; y = &x; return *y; }'
+assert 3 'int main() { int x; x = 3; int *y; y = &x; return *y; }'
 
 assert 3 '
 int main() {
@@ -81,7 +81,7 @@ int main() {
 assert 8 '
 int main() {
   int *p;
-  return sizeof(*p + 2);
+  return sizeof(p + 2);
 }
 '
 
@@ -90,6 +90,14 @@ int main() {
   int a;
   a = 5;
   return sizeof(-a + 5);
+}
+'
+
+assert 4 '
+int main() {
+  int *a;
+  *a = 123;
+  return sizeof(*a);
 }
 '
 
